@@ -36,6 +36,13 @@
     - role: typically user or assistant  
     - content: the message text  
 
+- with this dataset we going to compete on
+
+    - information extraction - extract structured facts (entities, relations , attribute values) from the dialouges
+    - multi-session reasoning - ability to combine evidence accross multiple sessions to answer queries requiring aggregation , tracking or inderence
+    - temporal reasoning - understand and reason about time: ordering events, durations, recurrence , and time-relative queries
+    - knowledge updates - updating stored facts when new information contradicts or augments previous knowledge
+    - abstention - system should correcly refuses to answer when insufficient or contradictory evidence exists
 ---
 
 ## Why need durative memory?
