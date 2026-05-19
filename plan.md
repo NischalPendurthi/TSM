@@ -1,71 +1,96 @@
-## how to construct memory?
+## Episodic & Durative Memory Plan
 
-## how to consolidate constructed memory to durative memory?
+### How to construct episodic memory
 
-## how to utilize the memory?
+- Batch chat turns per session and extract grounded facts with a local model (REST API).
+- Consolidate all grounded facts and create compact summaries per entity using supporting chat turns (same local model).
 
-## how to update existing memory?
+Challenges
 
-## what are our benchmarks?
+- Avoid reliance on paid/free external APIs; prefer local models.
+- Optimize for latency vs. quality when batching.
 
----
+Advanced
 
-## First Part is Duration-aware memory construction.
+- Tune batching size for a balance between latency and extraction quality.
+- Track and include relevant context responsible for each summary.
 
-## Our Dataset 
+### Structure of memory
 
-- The file `longmemeval_s_cleaned.json` is a top-level JSON array with 500 records.
+Directory layout (memory_store):
 
-- Each record is a dictionary with these fields:
+```
+memory_store/
+│
+├── question_001/
+│   ├── raw_facts.json          ← TKG facts extracted per turn
+│   ├── entity_summaries.json   ← consolidated entity summaries
+│   ├── topic_summaries.json    ← durative: clustered topics per month
+│   ├── persona_summary.json    ← durative: user persona per month
+│   └── graph.json              ← full graph (nodes + edges)
+│
+├── question_002/
+│   ├── raw_facts.json
+│   ├── entity_summaries.json
+│   ...
+│
+└── results/
+    ├── answers.json            ← generated answers
+    └── scores.json             ← benchmark scores per category
+```
 
-  - question_id: string identifier  
-  - question_type: string label, for example single-session-user  
-  - question: the query text  
-  - question_date: timestamp-like string, for example 2023/05/30 (Tue) 23:40  
-  - answer: usually a string, but sometimes an integer  
-  - answer_session_ids: array of session ID strings  
-  - haystack_dates: array of timestamp strings  
-  - haystack_session_ids: array of session ID strings  
-  - haystack_sessions: array of conversations  
+### Model specifications
 
-- The nested haystack_sessions field is the most structured part:
+- Architecture: LFM2
+- Size: 354M
+- Context length: 128000
+- Embedding length: 1024
+- Quantization: unknown
+- Capabilities: completion
+- Stop tokens: `<|im_start|>`, `<|im_end|>`
+- License: LFM Open License v1.0
 
-  - it is a list of sessions  
-  - each session is a list of message objects  
-  - each message object has:
-    - role: typically user or assistant  
-    - content: the message text  
+Template
 
-- with this dataset we going to compete on
+```
+{{- range .Messages }}<|im_start|>{{ .Role }}
+{{ .Content }}<|im_end|>
+{{ end }}<|im_start|>assistant
+```
 
-    - information extraction - extract structured facts (entities, relations , attribute values) from the dialouges
-    - multi-session reasoning - ability to combine evidence accross multiple sessions to answer queries requiring aggregation , tracking or inderence
-    - temporal reasoning - understand and reason about time: ordering events, durations, recurrence , and time-relative queries
-    - knowledge updates - updating stored facts when new information contradicts or augments previous knowledge
-    - abstention - system should correcly refuses to answer when insufficient or contradictory evidence exists
----
+### Consolidation to durative memory
 
-## Why need durative memory?
+- Build a timeline of events across sessions (use haystack_dates/haystack_sessions).
+- Cluster semantically related events and represent facts in a knowledge graph.
+- Consolidate clusters into durative summaries (topics, persona, timelines).
 
-- Point-Wise memory representations break temporally continous experiences.
+### Utilizing and updating memory
 
----
+- Use entity summaries and graph to answer queries requiring aggregation, tracking, and temporal reasoning.
+- When new evidence contradicts or augments existing facts, update raw_facts.json and regenerate affected summaries/graph.
+- Implement abstention when evidence is insufficient or contradictory.
 
-## Why need dialogue-timeline?
+### Benchmarks
 
-- To construct durative memory.
+- Use LongMemEval_S (longmemeval_s_cleaned.json) to evaluate on:
+  - Information extraction (entities, relations, attributes)
+  - Multi-session reasoning (aggregation, tracking, inference)
+  - Temporal reasoning (ordering, durations, recurrence)
+  - Knowledge updates (conflict resolution, updates over time)
+  - Abstention (refuse when insufficient/contradictory evidence)
 
----
+Dataset notes
 
-## How to construct duration aware memory?
+- longmemeval_s_cleaned.json: top-level JSON array with ~500 records.
+- Each record fields: question_id, question_type, question, question_date, answer, answer_session_ids, haystack_dates, haystack_session_ids, haystack_sessions.
+- haystack_sessions: list of sessions; each session is a list of messages {role, content}.
 
-- we need time line of events  
-- we need semantically related events  
-- represent these facts in a knowledge graph  
-- and consolidate it to generate duration aware memory  
+### Duration-aware memory construction
 
----
+- Requirements: timeline of events, semantic clustering, knowledge-graph representation, consolidation to durative memory.
 
-## How to dialogue-timeline the events?
+### Open questions
 
-## How to cluster related events?
+- How to build an effective dialogue timeline?
+- How to cluster related events robustly across sessions and time?
+
