@@ -79,7 +79,7 @@ Template
   - Knowledge updates (conflict resolution, updates over time)
   - Abstention (refuse when insufficient/contradictory evidence)
 
-Dataset notes
+### Dataset notes
 
 - longmemeval_s_cleaned.json: top-level JSON array with ~500 records.
 - Each record fields: question_id, question_type, question, question_date, answer, answer_session_ids, haystack_dates, haystack_session_ids, haystack_sessions.
