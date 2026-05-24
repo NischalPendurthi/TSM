@@ -1,1 +1,4 @@
 data/*.json
+memory_store
+codebase/__pycache__
+codebase/.env
